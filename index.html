@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaçış Oyunu - Yenilgide Sıfırlama</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            color: #ffcc00;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        #game-board {
+            display: grid;
+            gap: 2px;
+            margin: 0 auto;
+            background-color: #2c3e50;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+        
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+        
+        .empty {
+            background-color: #ecf0f1;
+        }
+        
+        .wall {
+            background-color: #2c3e50;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .player {
+            background-color: #e74c3c;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #e74c3c;
+            z-index: 10;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .exit {
+            background-color: #2ecc71;
+            box-shadow: 0 0 10px #2ecc71;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .trap {
+            background-color: #9b59b6;
+            box-shadow: 0 0 8px #9b59b6;
+        }
+        
+        .appearing {
+            animation: appear 0.5s forwards;
+        }
+        
+        .disappearing {
+            animation: disappear 0.5s forwards;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(to bottom, #3498db, #2980b9);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            z-index: 100;
+            display: none;
+        }
+        
+        .message h2 {
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+        
+        .level-btn {
+            background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+        }
+        
+        .fail-message {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes appear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes disappear {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .cell {
+                font-size: 0.8rem;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kaçış Oyunu - Yenilgide Sıfırlama</h1>
+        
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">SEVİYE</span>
+                <span id="level" class="info-value">1</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">HAMLE</span>
+                <span id="move-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">BOYUT</span>
+                <span id="board-size" class="info-value">8x8</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ENGEL</span>
+                <span id="trap-count" class="info-value">3</span>
+            </div>
+        </div>
+        
+        <div id="game-board"></div>
+        
+        <div class="controls">
+            <button id="reset-btn">Yeniden Başlat</button>
+            <button class="level-btn" id="next-level">Sonraki Seviye</button>
+        </div>
+        
+        <div class="instructions">
+            <p>Oyunu oynamak için ok tuşlarını kullanın. 🔴 Sen, 🟢 Çıkış, 🟣 Engel</p>
+            <p id="level-info">Seviye 1: Bir engele basarsanız SEVİYE 1'e dönersiniz!</p>
+        </div>
+    </div>
+    
+    <div id="win-message" class="message">
+        <h2>Tebrikler! Çıkışa Ulaştınız! 🎉</h2>
+        <p>Toplam hamle: <span id="final-move-count">0</span></p>
+        <button id="next-level-btn">Sonraki Seviye</button>
+        <button onclick="resetGame()">Tekrar Oyna</button>
+    </div>
+
+    <div id="fail-message" class="message fail-message">
+        <h2>Engale Bastınız! ❌</h2>
+        <p>Seviye 1'e dönüyorsunuz...</p>
+        <button onclick="resetToLevelOne()">Tamam</button>
+    </div>
+
+    <script>
+        // Oyun değişkenleri
+        let boardSize = 8;
+        let playerPosition = { x: 1, y: 1 };
+        let exitPosition = { x: boardSize-2, y: boardSize-2 };
+        let traps = [];
+        let walls = [];
+        let moveCount = 0;
+        let trapCount = 3;
+        let trapInterval;
+        let currentLevel = 1;
+        
+        // Oyun tahtasını oluştur
+        function createBoard() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            // Oyun tahtası stilini ayarla
+            gameBoard.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+            
+            // Hücre boyutunu ayarla
+            const cellSize = Math.min(500 / boardSize, 50);
+            gameBoard.style.gap = `${Math.max(1, 3 - Math.floor(currentLevel/5))}px`;
+            
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.style.width = `${cellSize}px`;
+                    cell.style.height = `${cellSize}px`;
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    
+                    // Duvarları oluştur
+                    if (x === 0 || y === 0 || x === boardSize-1 || y === boardSize-1 || 
+                        walls.some(wall => wall.x === x && wall.y === y)) {
+                        cell.classList.add('wall');
+                    }
+                    // Oyuncuyu yerleştir
+                    else if (x === playerPosition.x && y === playerPosition.y) {
+                        cell.classList.add('player');
+                        cell.textContent = '🔴';
+                    }
+                    // Çıkışı yerleştir
+                    else if (x === exitPosition.x && y === exitPosition.y) {
+                        cell.classList.add('exit');
+                        cell.textContent = '🟢';
+                    }
+                    // Boş hücre
+                    else {
+                        cell.classList.add('empty');
+                    }
+                    
+                    gameBoard.appendChild(cell);
+                }
+            }
+            
+            updateTrapCount();
+            startTrapCycle();
+            
+            // Seviye bilgisini güncelle
+            document.getElementById('level').textContent = currentLevel;
+            document.getElementById('board-size').textContent = `${boardSize}x${boardSize}`;
+            
+            // Seviye bilgi metnini güncelle
+            const levelInfo = document.getElementById('level-info');
+            levelInfo.textContent = `Seviye ${currentLevel}: Bir engele basarsanız SEVİYE 1'e dönersiniz!`;
+        }
+        
+        // Sonraki seviyeye geç
+        function nextLevel() {
+            currentLevel++;
+            
+            // Seviyeye göre zorluğu artır
+            boardSize = 8 + Math.floor(currentLevel / 2);
+            if (boardSize > 15) boardSize = 15;
+            
+            trapCount = 3 + Math.floor(currentLevel * 1.5);
+            if (trapCount > 20) trapCount = 20;
+            
+            // Labirenti ve duvarları oluştur
+            generateMaze();
+            
+            // Oyuncu ve çıkış konumlarını ayarla
+            playerPosition = { x: 1, y: 1 };
+            exitPosition = { x: boardSize-2, y: boardSize-2 };
+            
+            moveCount = 0;
+            document.getElementById('move-count').textContent = moveCount;
+            
+            // Önceki interval'i temizle
+            if (trapInterval) clearInterval(trapInterval);
+            
+            createBoard();
+            
+            // Mesajı gizle
+            document.getElementById('win-message').style.display = 'none';
+        }
+        
+        // Seviye 1'e dön
+        function resetToLevelOne() {
+            currentLevel = 1;
+            boardSize = 8;
+            trapCount = 3;
+            
+            // Labirenti ve duvarları oluştur
+            generateMaze();
+            
+            // Oyuncu ve çıkış konumlarını ayarla
+            playerPosition = { x: 1, y: 1 };
+            exitPosition = { x: boardSize-2, y: boardSize-2 };
+            
+            moveCount = 0;
+            document.getElementById('move-count').textContent = moveCount;
+            
+            // Önceki interval'i temizle
+            if (trapInterval) clearInterval(trapInterval);
+            
+            createBoard();
+            
+            // Mesajı gizle
+            document.getElementById('fail-message').style.display = 'none';
+        }
+        
+        // Labirent oluştur
+        function generateMaze() {
+            walls = [];
+            
+            // Seviyeye göre duvar sayısını belirle
+            const wallCount = Math.floor(currentLevel * 2.5);
+            
+            for (let i = 0; i < wallCount; i++) {
+                let wallX, wallY;
+                
+                // Rastgele duvar konumları oluştur (kenarlara ve köşelere yakın olmamasına dikkat et)
+                do {
+                    wallX = Math.floor(Math.random() * (boardSize - 4)) + 2;
+                    wallY = Math.floor(Math.random() * (boardSize - 4)) + 2;
+                } while (
+                    (wallX === playerPosition.x && wallY === playerPosition.y) ||
+                    (wallX === exitPosition.x && wallY === exitPosition.y) ||
+                    walls.some(wall => wall.x === wallX && wall.y === wallY) ||
+                    // Çıkış yolunu tamamen kapatmamak için kontrol
+                    (wallX === boardSize-2 && wallY === boardSize-3) ||
+                    (wallX === boardSize-3 && wallY === boardSize-2)
+                );
+                
+                walls.push({ x: wallX, y: wallY });
+                
+                // %30 ihtimalle L şeklinde ek duvar ekle
+                if (Math.random() < 0.3) {
+                    const direction = Math.floor(Math.random() * 4);
+                    let extraX = wallX;
+                    let extraY = wallY;
+                    
+                    switch(direction) {
+                        case 0: extraX++; break;
+                        case 1: extraX--; break;
+                        case 2: extraY++; break;
+                        case 3: extraY--; break;
+                    }
+                    
+                    if (extraX > 0 && extraX < boardSize-1 && extraY > 0 && extraY < boardSize-1) {
+                        walls.push({ x: extraX, y: extraY });
+                    }
+                }
+            }
+        }
+        
+        // Engel sayısını güncelle
+        function updateTrapCount() {
+            document.getElementById('trap-count').textContent = trapCount;
+        }
+        
+        // Engel döngüsünü başlat
+        function startTrapCycle() {
+            // Önceki interval'i temizle
+            if (trapInterval) clearInterval(trapInterval);
+            
+            // Seviyeye göre engel değişim hızını ayarla
+            const intervalTime = Math.max(500, 2500 - currentLevel * 200);
+            
+            // Yeni engeller oluştur
+            generateTraps();
+            
+            // Interval'i başlat
+            trapInterval = setInterval(() => {
+                removeTraps();
+                setTimeout(generateTraps, 300);
+            }, intervalTime);
+        }
+        
+        // Engelleri oluştur
+        function generateTraps() {
+            removeTraps();
+            traps = [];
+            
+            for (let i = 0; i < trapCount; i++) {
+                let trapX, trapY;
+                
+                // Oyuncu, çıkış ve duvar pozisyonlarına engel koymamaya dikkat et
+                do {
+                    trapX = Math.floor(Math.random() * (boardSize - 2)) + 1;
+                    trapY = Math.floor(Math.random() * (boardSize - 2)) + 1;
+                } while (
+                    (trapX === playerPosition.x && trapY === playerPosition.y) ||
+                    (trapX === exitPosition.x && trapY === exitPosition.y) ||
+                    walls.some(wall => wall.x === trapX && wall.y === trapY) ||
+                    traps.some(trap => trap.x === trapX && trap.y === trapY)
+                );
+                
+                traps.push({ x: trapX, y: trapY });
+                
+                const trapCell = document.querySelector(`.cell[data-x="${trapX}"][data-y="${trapY}"]`);
+                if (trapCell && !trapCell.classList.contains('player') && !trapCell.classList.contains('exit')) {
+                    trapCell.classList.remove('empty');
+                    trapCell.classList.add('trap', 'appearing');
+                    trapCell.textContent = '🟣';
+                    
+                    // Animasyon sonrası sınıfı kaldır
+                    setTimeout(() => {
+                        trapCell.classList.remove('appearing');
+                    }, 500);
+                }
+            }
+        }
+        
+        // Engelleri kaldır
+        function removeTraps() {
+            traps.forEach(trap => {
+                const trapCell = document.querySelector(`.cell[data-x="${trap.x}"][data-y="${trap.y}"]`);
+                if (trapCell && !trapCell.classList.contains('player') && !trapCell.classList.contains('exit') && !trapCell.classList.contains('wall')) {
+                    trapCell.classList.add('disappearing');
+                    
+                    setTimeout(() => {
+                        trapCell.classList.remove('trap', 'disappearing');
+                        trapCell.classList.add('empty');
+                        trapCell.textContent = '';
+                    }, 500);
+                }
+            });
+        }
+        
+        // Oyuncunun pozisyonunu güncelle
+        function updatePlayerPosition() {
+            // Önceki oyuncu konumunu temizle
+            document.querySelectorAll('.cell').forEach(cell => {
+                if (cell.classList.contains('player')) {
+                    cell.classList.remove('player');
+                    cell.textContent = '';
+                    
+                    // Eğer engel veya duvar değilse boş hücre yap
+                    if (!cell.classList.contains('trap') && !cell.classList.contains('wall')) {
+                        cell.classList.add('empty');
+                    }
+                }
+            });
+            
+            // Yeni oyuncu konumunu ayarla
+            const playerCell = document.querySelector(`.cell[data-x="${playerPosition.x}"][data-y="${playerPosition.y}"]`);
+            if (playerCell) {
+                playerCell.classList.remove('empty', 'trap');
+                playerCell.classList.add('player');
+                playerCell.textContent = '🔴';
+                
+                // Engel üzerine mi bastı kontrol et
+                if (traps.some(trap => trap.x === playerPosition.x && trap.y === playerPosition.y)) {
+                    // Seviye 1'e dön
+                    setTimeout(() => {
+                        document.getElementById('fail-message').style.display = 'block';
+                        clearInterval(trapInterval);
+                    }, 100);
+                    return;
+                }
+                
+                // Duvara mı bastı kontrol et
+                if (walls.some(wall => wall.x === playerPosition.x && wall.y === playerPosition.y)) {
+                    // Oyuncuyu bir önceki konuma geri al
+                    playerPosition = { x: prevX, y: prevY };
+                    updatePlayerPosition();
+                    return;
+                }
+                
+                // Kazanma durumunu kontrol et
+                checkWin();
+            }
+        }
+        
+        // Kazanma durumunu kontrol et
+        function checkWin() {
+            if (playerPosition.x === exitPosition.x && playerPosition.y === exitPosition.y) {
+                document.getElementById('final-move-count').textContent = moveCount;
+                document.getElementById('win-message').style.display = 'block';
+                clearInterval(trapInterval);
+            }
+        }
+        
+        // Oyunu sıfırla
+        function resetGame() {
+            resetToLevelOne();
+        }
+        
+        let prevX = 1, prevY = 1;
+        
+        // Klavye olaylarını dinle
+        document.addEventListener('keydown', (e) => {
+            prevX = playerPosition.x;
+            prevY = playerPosition.y;
+            
+            let newX = playerPosition.x;
+            let newY = playerPosition.y;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (playerPosition.y > 0) newY--;
+                    break;
+                case 'ArrowDown':
+                    if (playerPosition.y < boardSize - 1) newY++;
+                    break;
+                case 'ArrowLeft':
+                    if (playerPosition.x > 0) newX--;
+                    break;
+                case 'ArrowRight':
+                    if (playerPosition.x < boardSize - 1) newX++;
+                    break;
+                default:
+                    return; // Diğer tuşlara tepki verme
+            }
+            
+            // Yeni pozisyonu güncelle
+            playerPosition.x = newX;
+            playerPosition.y = newY;
+            moveCount++;
+            document.getElementById('move-count').textContent = moveCount;
+            
+            updatePlayerPosition();
+        });
+        
+        // Buton olaylarını dinle
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('next-level').addEventListener('click', nextLevel);
+        document.getElementById('next-level-btn').addEventListener('click', nextLevel);
+        
+        // Sayfa yüklendiğinde ilk seviyeyi yükle
+        window.onload = () => {
+            generateMaze();
+            createBoard();
+        };
+    </script>
+</body>
+</html>
